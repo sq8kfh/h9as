@@ -1,0 +1,3 @@
+[submodule "can"]
+	path = can
+	url = git@github.com:sq8kfh/h9-can.git

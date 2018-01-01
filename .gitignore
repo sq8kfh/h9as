@@ -1,0 +1,17 @@
+# General
+.DS_Store
+.idea
+*.cbp
+*.atsln
+*.xml
+*.cproj
+*.out
+.vs/
+
+# CMake
+cmake-build-debug/
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+build/
