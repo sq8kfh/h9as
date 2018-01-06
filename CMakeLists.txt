@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 2.8.4)
 project(h9-eu1)
 
 set(PROGRAMMER jtag3isp)
-set(MMCU atmega16m1)
+set(MMCU atmega32m1)
 set(FREQ 16000000)
-set(BOOTSTART 0x3800) #in bytes
+set(BOOTSTART 0x7800) #in bytes
 
 set(SOURCE_FILES main.c can/can.c can/common.c can/common.h)
 

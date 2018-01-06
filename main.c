@@ -136,7 +136,7 @@ set_output(uint8_t o1, uint8_t o2)
 int main(void)
 {
 	DDRB = 0xff;
-	DDRC = 0xff ^ (1 << PC6); //ADC
+	DDRC = 0xff ^ ((1 << PC6) | (1 << PC5) | (1 << PC4)); //ADC
 	DDRD = 0xff;
 	DDRE = 0xff;
 	
@@ -175,6 +175,9 @@ int main(void)
 				CAN_init_response_msg(&cm, &cm_res);
 				cm_res.dlc = 2;
 				cm_res.data[0] = cm.data[0];
+
+                uint32_t tmp;
+                uint16_t adc;
 				switch (cm.data[0]) {
 					case 10:
 						cm_res.data[1] = output1;
@@ -185,11 +188,12 @@ int main(void)
 						CAN_put_msg(&cm_res);
 						break;
 					case 12:
+                        ADMUX = (1 << MUX3) | (1 << MUX1);
 						ADCSRA |= (1<<ADSC); //ADSC: uruchomienie pojedynczej konwersji
 						cm_res.dlc = 3;
 						while(ADCSRA & (1<<ADSC)); //czeka na zako�czenie konwersji
-						uint32_t tmp = ADCL;
-						uint16_t adc = ADCH;
+                        tmp = ADCL;
+                        adc = ADCH;
 						adc <<= 8;
 						adc |= tmp;
 						tmp = (uint32_t)625*5*adc/256;
@@ -197,6 +201,34 @@ int main(void)
 						cm_res.data[2] = (uint8_t)(tmp & 0xff);
 						CAN_put_msg(&cm_res);
 						break;
+                    case 13:
+                        ADMUX = (1 << MUX3);
+                        ADCSRA |= (1<<ADSC); //ADSC: uruchomienie pojedynczej konwersji
+                        cm_res.dlc = 3;
+                        while(ADCSRA & (1<<ADSC)); //czeka na zako�czenie konwersji
+                        tmp = ADCL;
+                        adc = ADCH;
+                        adc <<= 8;
+                        adc |= tmp;
+                        tmp = 16*adc;
+                        cm_res.data[1] = (uint8_t)((tmp >> 8) & 0xff);
+                        cm_res.data[2] = (uint8_t)(tmp & 0xff);
+                        CAN_put_msg(&cm_res);
+                        break;
+                    case 14:
+                        ADMUX = (1 << MUX3) | (1 << MUX0);
+                        ADCSRA |= (1<<ADSC); //ADSC: uruchomienie pojedynczej konwersji
+                        cm_res.dlc = 3;
+                        while(ADCSRA & (1<<ADSC)); //czeka na zako�czenie konwersji
+                        tmp = ADCL;
+                        adc = ADCH;
+                        adc <<= 8;
+                        adc |= tmp;
+                        tmp = 16*adc;
+                        cm_res.data[1] = (uint8_t)((tmp >> 8) & 0xff);
+                        cm_res.data[2] = (uint8_t)(tmp & 0xff);
+                        CAN_put_msg(&cm_res);
+                        break;
 				}
 			}
 			else if (cm.type == H9_TYPE_SET_REG) {
