@@ -8,6 +8,8 @@
 *.out
 .vs/
 
+config.h
+
 # CMake
 cmake-build-debug/
 CMakeFiles

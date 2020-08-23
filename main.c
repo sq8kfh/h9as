@@ -1,9 +1,12 @@
 /*
- * h9-eu1.c
+ * h9as
+ * Antenna switch
  *
- * Created: 2017-09-07 19:07:15
- * Author : SQ8KFH
- */ 
+ * Created by SQ8KFH on 2017-09-07.
+ *
+ * Copyright (C) 2017-2020 Kamil Palkowski. All rights reserved.
+ */
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/cpufunc.h> 

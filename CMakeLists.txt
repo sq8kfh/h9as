@@ -1,27 +1,33 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.10)
 
-project(h9-eu1)
+project(h9as VERSION 0.0)
+set(NODE_TYPE 5)
+set(MMCU atmega32m1)
+set(FREQ 16000000)
+
+if (MMCU STREQUAL atmega64m1)
+    set(BOOTSTART 0xf800) #in bytes m641
+    set(FUSE -U lfuse:w:0xf4:m -U hfuse:w:0xd5:m -U efuse:w:0xfe:m)
+elseif(MMCU STREQUAL atmega32m1)
+    set(BOOTSTART 0x7800) #in bytes m321
+    set(FUSE -U lfuse:w:0xf4:m -U hfuse:w:0xd3:m -U efuse:w:0xfe:m)
+endif()
 
 set(PROGRAMMER jtag3isp)
-set(MMCU atmega16m1)
-set(FREQ 16000000)
-set(BOOTSTART 0x3800) #in bytes
 
-set(SOURCE_FILES main.c can/can.c can/common.c can/common.h can/h9msg.h can/h9node.h)
+set(SOURCE_FILES main.c can/can.c can/can.h can/h9msg.h)
 
 if(BOOTSTART)
-    add_subdirectory(can)
+    add_subdirectory(bootloader)
 endif(BOOTSTART)
-
-set(CMAKE_SYSTEM_NAME Generic)
 
 set(PATHS "/usr/local/bin/ /opt/local/bin/")
 
 function(add_additional_clean_file FILENAME)
     get_directory_property(EXTRA_CLEAN_FILES ADDITIONAL_MAKE_CLEAN_FILES)
     set_directory_properties(
-        PROPERTIES
-        ADDITIONAL_MAKE_CLEAN_FILES "${EXTRA_CLEAN_FILES};${FILENAME}"
+            PROPERTIES
+            ADDITIONAL_MAKE_CLEAN_FILES "${EXTRA_CLEAN_FILES};${FILENAME}"
     )
 
     set_source_files_properties(${FILENAME} PROPERTIES GENERATED TRUE)
@@ -33,6 +39,8 @@ find_program(AVR_SIZE avr-size PATHS ${PATHS})
 find_program(AVRDUDE avrdude PATHS ${PATHS})
 find_program(SREC_CAT srec_cat PATHS ${PATHS})
 
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR avr)
 set(CMAKE_C_COMPILER ${AVR_C_COMPILER})
 
 if(NOT BUILD_DIRECTORY)
@@ -58,6 +66,8 @@ if(NOT MMCU)
     message(FATAL_ERROR "MMCU variable is not defined")
 endif(NOT MMCU)
 
+configure_file(config.h.in config.h)
+
 message(STATUS "Building ${PROJECT_NAME} for ${MMCU} with frequency ${FREQ}")
 message(STATUS "Source files: ${SOURCE_FILES}")
 message(STATUS "Using flags: ${CMAKE_C_FLAGS}")
@@ -75,7 +85,7 @@ add_additional_clean_file(${EEP_FILE})
 
 if(BOOTSTART)
     set(BOOTSTART_FLAG "-DBOOTSTART=${BOOTSTART}")
-    add_dependencies(${PROJECT_NAME} h9-bootloader)
+    add_dependencies(${PROJECT_NAME} h9avr-bootloader)
     set(HEX_WITH_BL_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}_with_bl.hex")
     add_additional_clean_file(${HEX_WITH_BL_FILE})
 endif(BOOTSTART)
@@ -101,16 +111,16 @@ add_custom_target("flash"
         ${AVRDUDE} -p ${MMCU} -c ${PROGRAMMER} -U ${HEX_FILE}
         DEPENDS ${PROJECT_NAME}
         COMMENT "Flash uploading"
-)
+        )
 
 if(BOOTSTART)
     add_custom_target(${PROJECT_NAME}_with_bl
-            COMMAND ${SREC_CAT} ${HEX_FILE} -I can/build/h9-bootloader.hex -I -o ${HEX_WITH_BL_FILE} -I
-            DEPENDS ${PROJECT_NAME} h9-bootloader
+            COMMAND ${SREC_CAT} ${HEX_FILE} -I bootloader/build/h9avr-bootloader.hex -I -o ${HEX_WITH_BL_FILE} -I
+            DEPENDS ${PROJECT_NAME} h9avr-bootloader
             COMMENT "Flashs combinating"
             )
 
-    add_custom_target("flashall"
+    add_custom_target("flash_all"
             ${AVRDUDE} -p ${MMCU} -c ${PROGRAMMER} -U ${HEX_WITH_BL_FILE}
             DEPENDS ${PROJECT_NAME}_with_bl
             COMMENT "Full flash uploading"
@@ -121,4 +131,9 @@ add_custom_target("eeprom"
         ${AVRDUDE} -p ${MMCU} -c ${PROGRAMMER} -U eeprom:w:${EEP_FILE}
         DEPENDS ${PROJECT_NAME}
         COMMENT "Eeprom uploading"
+        )
+
+add_custom_target("fuse"
+        ${AVRDUDE} -p ${MMCU} -c ${PROGRAMMER} ${FUSE}
+        COMMENT "Fuse uploading"
         )

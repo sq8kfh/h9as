@@ -1,3 +1,6 @@
+[submodule "bootloader"]
+	path = bootloader
+	url = https://github.com/sq8kfh/h9avr-bootloader.git
 [submodule "can"]
 	path = can
-	url = git@github.com:sq8kfh/h9-can.git
+	url = https://github.com/sq8kfh/h9avr-can.git
