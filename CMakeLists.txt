@@ -2,14 +2,17 @@ cmake_minimum_required(VERSION 3.10)
 
 project(h9as VERSION 0.0)
 set(NODE_TYPE 5)
-set(MMCU atmega32m1)
+set(MMCU atmega16m1)
 set(FREQ 16000000)
 
 if (MMCU STREQUAL atmega64m1)
-    set(BOOTSTART 0xf800) #in bytes m641
+    set(BOOTSTART 0xf800) #in bytes 64m1
     set(FUSE -U lfuse:w:0xf4:m -U hfuse:w:0xd5:m -U efuse:w:0xfe:m)
 elseif(MMCU STREQUAL atmega32m1)
-    set(BOOTSTART 0x7800) #in bytes m321
+    set(BOOTSTART 0x7800) #in bytes 32m1
+    set(FUSE -U lfuse:w:0xf4:m -U hfuse:w:0xd3:m -U efuse:w:0xfe:m)
+elseif(MMCU STREQUAL atmega16m1)
+    set(BOOTSTART 0x3800) #in bytes 16m1
     set(FUSE -U lfuse:w:0xf4:m -U hfuse:w:0xd3:m -U efuse:w:0xfe:m)
 endif()
 
